@@ -18,11 +18,11 @@ export function getTemperature(
 
   let threshold: number
   if (app.status === '已投递') {
-    threshold = nudge.nudge_applied
+    threshold = (nudge as any).nudge_applied
   } else if (app.status === '笔试') {
-    threshold = nudge.nudge_written
+    threshold = (nudge as any).nudge_written
   } else {
-    threshold = nudge.nudge_interview
+    threshold = (nudge as any).nudge_interview
   }
 
   const ratio = days / threshold
