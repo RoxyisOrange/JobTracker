@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react'
 import SettingsLock from '@/components/SettingsLock'
 import StorageManager from '@/components/StorageManager'
+import { applyTheme, THEME_KEY } from '@/components/ThemeHydrator'
 import { DEFAULT_DIRECTIONS, DEFAULT_TEXT_MODEL, DEFAULT_VISION_MODEL, NUDGE_DEFAULTS } from '@/lib/constants'
 import type { Application, InboxItem, Resume, UserConfig } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
@@ -62,6 +63,16 @@ export default function SettingsPageClient() {
   const [nudgeInterview, setNudgeInterview] = useState(NUDGE_DEFAULTS.interview)
   const [directionInput, setDirectionInput] = useState('')
   const [importMode, setImportMode] = useState<'merge' | 'overwrite'>('merge')
+  const [theme, setTheme] = useState<'light' | 'dark'>('light')
+
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      const currentTheme = localStorage.getItem(THEME_KEY) === 'dark' ? 'dark' : 'light'
+      setTheme(currentTheme)
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [])
 
   useEffect(() => {
     if (!config) return
@@ -300,6 +311,25 @@ export default function SettingsPageClient() {
           </div>
         )}
       </SettingsLock>
+
+      <section className="rounded-lg border border-slate-100 bg-white p-5">
+        <h2 className="text-base font-semibold text-slate-800">主题</h2>
+        <div className="mt-4 flex rounded-lg border border-slate-200 bg-white p-1 w-fit">
+          {(['light', 'dark'] as const).map((item) => (
+            <button
+              key={item}
+              type="button"
+              onClick={() => {
+                setTheme(item)
+                applyTheme(item)
+              }}
+              className={`rounded-md px-4 py-2 text-sm font-medium ${theme === item ? 'bg-blue-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}
+            >
+              {item === 'light' ? '浅色' : '深色'}
+            </button>
+          ))}
+        </div>
+      </section>
 
       <section className="rounded-lg border border-slate-100 bg-white p-5">
         <h2 className="text-base font-semibold text-slate-800">职业方向管理</h2>

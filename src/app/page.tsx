@@ -2,6 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Sidebar from '@/components/Sidebar'
 import StatsGrid from '@/components/StatsGrid'
+import InterviewReminderBanner from '@/components/InterviewReminderBanner'
 
 export default async function DashboardPage() {
   const supabase = await createClient()
@@ -14,6 +15,9 @@ export default async function DashboardPage() {
       <Sidebar />
       <main className="flex-1 overflow-auto p-6">
         <h1 className="text-2xl font-bold text-slate-800 mb-6">数据看板</h1>
+        <div className="mb-5">
+          <InterviewReminderBanner />
+        </div>
         <StatsGrid />
       </main>
     </div>

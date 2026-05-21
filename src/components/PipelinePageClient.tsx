@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import ApplicationModal from '@/components/ApplicationModal'
+import BatchEntryModal from '@/components/BatchEntryModal'
 import BatchBar from '@/components/BatchBar'
 import BatchStatusPicker from '@/components/BatchStatusPicker'
 import PipelineCompanyView from '@/components/PipelineCompanyView'
@@ -121,6 +122,7 @@ export default function PipelinePageClient() {
   const [batchMode, setBatchMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showStatusPicker, setShowStatusPicker] = useState(false)
+  const [showBatchEntry, setShowBatchEntry] = useState(false)
 
   const directions = config?.directions?.length ? config.directions : DEFAULT_DIRECTIONS
   const nudgeConfig = useMemo(() => (
@@ -145,6 +147,10 @@ export default function PipelinePageClient() {
         setShowStatusPicker(false)
         return
       }
+      if (showBatchEntry) {
+        setShowBatchEntry(false)
+        return
+      }
       if (reviewApp) {
         setReviewApp(null)
         return
@@ -161,7 +167,7 @@ export default function PipelinePageClient() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [batchMode, modalApp, reviewApp, showStatusPicker])
+  }, [batchMode, modalApp, reviewApp, showBatchEntry, showStatusPicker])
 
   const closeBatchMode = () => {
     setBatchMode(false)
@@ -238,6 +244,17 @@ export default function PipelinePageClient() {
     closeBatchMode()
   }
 
+  const createBatchApplications = async (items: CreateApplicationInput[]) => {
+    for (const item of items) {
+      const result = await createApplication(item)
+      if (result.error) {
+        window.alert(result.error.message)
+        return
+      }
+    }
+    setShowBatchEntry(false)
+  }
+
   return (
     <div className="grid gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -267,6 +284,13 @@ export default function PipelinePageClient() {
             className="rounded-lg bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700"
           >
             新增投递
+          </button>
+          <button
+            type="button"
+            onClick={() => setShowBatchEntry(true)}
+            className="rounded-lg border border-blue-100 bg-white px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+          >
+            批量录入
           </button>
           {view === 'table' && (
             <button
@@ -420,6 +444,15 @@ export default function PipelinePageClient() {
           onSave={saveApplication}
           onReview={(application) => setReviewApp(application)}
           checkDuplicate={findDuplicate}
+        />
+      )}
+
+      {showBatchEntry && (
+        <BatchEntryModal
+          directions={directions}
+          resumes={resumes}
+          onClose={() => setShowBatchEntry(false)}
+          onSubmit={createBatchApplications}
         />
       )}
 
