@@ -21,7 +21,13 @@ export function useApplications() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { fetch() }, [fetch])
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void fetch()
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [fetch])
 
   const add = async (
     item: Omit<Application, 'id' | 'user_id' | 'created_at' | 'updated_at'>

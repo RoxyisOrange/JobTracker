@@ -5,23 +5,30 @@ export const APPLICATION_STATUSES = [
   '二面',
   '三面',
   'HR面',
-  'offer',
-  '已拒绝',
+  'Offer',
+  '已挂',
   '已放弃',
 ] as const
 
-export const ACTIVE_STATUSES = ['已投递', '笔试', '一面', '二面', '三面', 'HR面']
-export const TERMINAL_STATUSES = ['offer', '已拒绝', '已放弃']
+export const ACTIVE_STATUSES = ['笔试', '一面', '二面', '三面', 'HR面']
+export const TERMINAL_STATUSES = ['Offer', '已挂', '已放弃']
 
 export const PLATFORMS = [
-  '牛客',
-  '实习僧',
   'Boss直聘',
-  '拉勾',
-  '智联',
-  '前程无忧',
-  '校招',
-  '内推',
+  '实习僧',
+  '官网',
+  '牛客',
+  '邮件直投',
+  '其他',
+] as const
+
+export const SOURCES = [
+  '微信群',
+  '小红书',
+  '朋友推荐',
+  '牛客',
+  'Boss直聘',
+  '实习僧',
   '官网',
   '其他',
 ] as const
@@ -33,9 +40,9 @@ export const DEFAULT_DIRECTIONS = [
   '大模型评测',
 ] as const
 
-export const CURRENT_BATCH = '2025届秋招'
+export const BATCHES = ['日常实习', '暑期实习', '春招', '秋招'] as const
 
-export const BATCHES = ['2025届秋招', '2025届春招', '2024届秋招', '2024届春招'] as const
+export const CURRENT_BATCH = '秋招'
 
 export const DEFAULT_TEXT_MODEL = 'qwen-turbo-latest'
 export const DEFAULT_VISION_MODEL = 'qwen3-vl-flash'
@@ -53,8 +60,8 @@ export const STATUS_COLORS: Record<string, string> = {
   二面: 'bg-purple-100 text-purple-700',
   三面: 'bg-purple-100 text-purple-700',
   HR面: 'bg-indigo-100 text-indigo-700',
-  offer: 'bg-green-100 text-green-700',
-  已拒绝: 'bg-red-100 text-red-700',
+  Offer: 'bg-green-100 text-green-700',
+  已挂: 'bg-red-100 text-red-700',
   已放弃: 'bg-gray-100 text-gray-500',
 }
 

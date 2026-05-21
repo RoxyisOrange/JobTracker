@@ -15,7 +15,7 @@ export default function StatsGrid() {
   const interviews = applications.filter((a) =>
     ['一面', '二面', '三面', 'HR面'].includes(a.status)
   ).length
-  const offers = applications.filter((a) => a.status === 'offer').length
+  const offers = applications.filter((a) => a.status === 'Offer').length
   const inbox = inboxItems.filter((i) => i.status === 'collected').length
 
   const stats = [

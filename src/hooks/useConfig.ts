@@ -43,7 +43,13 @@ export function useConfig() {
     setLoading(false)
   }, [])
 
-  useEffect(() => { fetch() }, [fetch])
+  useEffect(() => {
+    const timer = window.setTimeout(() => {
+      void fetch()
+    }, 0)
+
+    return () => window.clearTimeout(timer)
+  }, [fetch])
 
   const update = async (patch: Partial<Omit<UserConfig, 'user_id' | 'created_at' | 'updated_at'>>) => {
     const supabase = createClient()
