@@ -3,14 +3,16 @@
 import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 import { APPLICATION_STATUSES, BATCHES, DEFAULT_DIRECTIONS, PLATFORMS } from '@/lib/constants'
-import type { Application, CreateApplicationInput } from '@/lib/types'
+import type { Application, CreateApplicationInput, Resume } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
 interface ApplicationModalProps {
   application?: Application | null
   directions?: readonly string[]
+  resumes?: Resume[]
   onClose: () => void
   onSave: (data: CreateApplicationInput) => Promise<void> | void
+  onReview?: (application: Application) => void
   checkDuplicate?: (company: string, position: string, excludeId?: string) => Application | null
 }
 
@@ -77,8 +79,10 @@ function formFromApplication(app: Application): ApplicationForm {
 export default function ApplicationModal({
   application,
   directions = DEFAULT_DIRECTIONS,
+  resumes = [],
   onClose,
   onSave,
+  onReview,
   checkDuplicate,
 }: ApplicationModalProps) {
   const [form, setForm] = useState<ApplicationForm>(() =>
@@ -258,6 +262,20 @@ export default function ApplicationModal({
               </label>
             </div>
 
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-700">关联简历</span>
+              <select
+                value={form.resume_id ?? ''}
+                onChange={(event) => setForm({ ...form, resume_id: event.target.value || null })}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              >
+                <option value="">未关联</option>
+                {resumes.map((resume) => (
+                  <option key={resume.id} value={resume.id}>{resume.name}</option>
+                ))}
+              </select>
+            </label>
+
             <div className="grid gap-4 md:grid-cols-2">
               <label className="grid gap-1.5">
                 <span className="text-sm font-medium text-slate-700">投递日期</span>
@@ -297,9 +315,30 @@ export default function ApplicationModal({
                 className="min-h-28 rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
               />
             </label>
+
+            <label className="grid gap-1.5">
+              <span className="text-sm font-medium text-slate-700">复盘文档链接</span>
+              <input
+                value={form.review_link ?? ''}
+                onChange={(event) => setForm({ ...form, review_link: event.target.value || null })}
+                className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
+              />
+            </label>
           </div>
 
-          <div className="sticky bottom-0 -mx-6 mt-6 flex justify-end gap-3 border-t border-slate-100 bg-white px-6 py-4">
+          <div className="sticky bottom-0 -mx-6 mt-6 flex justify-between gap-3 border-t border-slate-100 bg-white px-6 py-4">
+            <div>
+              {application && onReview && (
+                <button
+                  type="button"
+                  onClick={() => onReview(application)}
+                  className="rounded-lg border border-blue-100 px-4 py-2 text-sm font-medium text-blue-700 hover:bg-blue-50"
+                >
+                  生成复盘
+                </button>
+              )}
+            </div>
+            <div className="flex gap-3">
             <button
               type="button"
               onClick={onClose}
@@ -314,6 +353,7 @@ export default function ApplicationModal({
             >
               {saving ? '保存中...' : '保存'}
             </button>
+            </div>
           </div>
         </form>
       </div>

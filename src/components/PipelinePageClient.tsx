@@ -8,12 +8,14 @@ import BatchStatusPicker from '@/components/BatchStatusPicker'
 import PipelineCompanyView from '@/components/PipelineCompanyView'
 import PipelineKanban from '@/components/PipelineKanban'
 import PipelineTable from '@/components/PipelineTable'
+import ReviewModal from '@/components/ReviewModal'
 import { ACTIVE_STATUSES, APPLICATION_STATUSES, BATCHES, DEFAULT_DIRECTIONS, PLATFORMS } from '@/lib/constants'
 import { getTemperature } from '@/lib/temperature'
 import type { Application, CreateApplicationInput } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { useApplications } from '@/hooks/useApplications'
 import { useConfig } from '@/hooks/useConfig'
+import { useResumes } from '@/hooks/useResumes'
 
 type ViewMode = 'table' | 'kanban' | 'company'
 
@@ -106,6 +108,7 @@ export default function PipelinePageClient() {
     findDuplicate,
   } = useApplications()
   const { config } = useConfig()
+  const { resumes } = useResumes()
 
   const [view, setView] = useState<ViewMode>('table')
   const [query, setQuery] = useState('')
@@ -114,6 +117,7 @@ export default function PipelinePageClient() {
   const [platform, setPlatform] = useState('')
   const [batch, setBatch] = useState('')
   const [modalApp, setModalApp] = useState<Application | null | undefined>()
+  const [reviewApp, setReviewApp] = useState<Application | null>(null)
   const [batchMode, setBatchMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showStatusPicker, setShowStatusPicker] = useState(false)
@@ -141,6 +145,10 @@ export default function PipelinePageClient() {
         setShowStatusPicker(false)
         return
       }
+      if (reviewApp) {
+        setReviewApp(null)
+        return
+      }
       if (modalApp !== undefined) {
         setModalApp(undefined)
         return
@@ -153,7 +161,7 @@ export default function PipelinePageClient() {
 
     window.addEventListener('keydown', onKeyDown)
     return () => window.removeEventListener('keydown', onKeyDown)
-  }, [batchMode, modalApp, showStatusPicker])
+  }, [batchMode, modalApp, reviewApp, showStatusPicker])
 
   const closeBatchMode = () => {
     setBatchMode(false)
@@ -407,9 +415,27 @@ export default function PipelinePageClient() {
         <ApplicationModal
           application={modalApp}
           directions={directions}
+          resumes={resumes}
           onClose={() => setModalApp(undefined)}
           onSave={saveApplication}
+          onReview={(application) => setReviewApp(application)}
           checkDuplicate={findDuplicate}
+        />
+      )}
+
+      {reviewApp && (
+        <ReviewModal
+          application={reviewApp}
+          resumes={resumes}
+          onClose={() => setReviewApp(null)}
+          onSave={async (patch) => {
+            const result = await updateApplication(reviewApp.id, patch)
+            if (result.error) {
+              window.alert(result.error.message)
+              return
+            }
+            setReviewApp(null)
+          }}
         />
       )}
     </div>
