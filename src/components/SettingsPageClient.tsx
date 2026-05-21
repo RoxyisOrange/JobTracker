@@ -233,7 +233,7 @@ export default function SettingsPageClient() {
 
       if (created && fileData) {
         const blob = base64ToBlob(fileData)
-        const path = `${user.id}/${created.id}_${resume.file_name ?? 'resume.pdf'}`
+        const path = `${user.id}/${created.id}-${Date.now()}.pdf`
         await supabase.storage.from('resumes').upload(path, blob, { upsert: true, contentType: 'application/pdf' })
         await supabase.from('resumes').update({ file_path: path }).eq('id', created.id)
       }

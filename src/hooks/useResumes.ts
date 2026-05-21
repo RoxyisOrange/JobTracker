@@ -13,8 +13,8 @@ export interface ResumeInput {
   file?: File | null
 }
 
-function safeFileName(name: string) {
-  return name.replace(/[^\w.\-\u4e00-\u9fa5]+/g, '_')
+function storagePath(userId: string, resumeId: string) {
+  return `${userId}/${resumeId}-${Date.now()}.pdf`
 }
 
 export function useResumes() {
@@ -49,7 +49,7 @@ export function useResumes() {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { data: null, error: { message: '请先登录' } }
 
-    const filePath = `${user.id}/${resumeId}_${safeFileName(file.name)}`
+    const filePath = storagePath(user.id, resumeId)
     const { error } = await supabase.storage.from(BUCKET).upload(filePath, file, {
       contentType: file.type || 'application/pdf',
       upsert: true,
@@ -90,7 +90,10 @@ export function useResumes() {
 
     if (input.file) {
       const uploaded = await uploadPdf(created.id, input.file)
-      if (uploaded.error) return { data: created, error: uploaded.error }
+      if (uploaded.error) {
+        await supabase.from('resumes').delete().eq('id', created.id)
+        return { data: null, error: uploaded.error }
+      }
 
       const { data, error } = await supabase
         .from('resumes')
