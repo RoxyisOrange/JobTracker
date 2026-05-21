@@ -8,9 +8,25 @@ import { useConfig } from '@/hooks/useConfig'
 
 const FUNNEL_STAGES = ['已投递', '笔试', '一面', '二面', '三面', 'HR面', 'Offer']
 const DIRECTION_COLORS = ['#3b82f6', '#10b981', '#f59e0b', '#8b5cf6', '#ef4444', '#06b6d4', '#84cc16', '#f97316']
+const FUNNEL_COLORS = ['#2563eb', '#3b82f6', '#6366f1', '#8b5cf6', '#a855f7', '#c084fc', '#f59e0b']
 
-function hasReachedStage(app: Application, stage: string) {
-  return app.status === stage || (app.status_history ?? []).some((item) => item.status === stage)
+function getReachedStageIndex(app: Application) {
+  const statuses = [app.status, ...(app.status_history ?? []).map((item) => item.status)]
+  return statuses.reduce((highest, status) => {
+    const index = FUNNEL_STAGES.indexOf(status)
+    return index > highest ? index : highest
+  }, 0)
+}
+
+function formatRate(count: number, total: number) {
+  if (total === 0) return '0%'
+  return `${Math.round((count / total) * 100)}%`
+}
+
+function funnelWidth(count: number, total: number) {
+  const maxWidth = 620
+  const minWidth = count === 0 ? 72 : 130
+  return Math.max(minWidth, (count / Math.max(1, total)) * maxWidth)
 }
 
 function monthKey(date: Date) {
@@ -78,11 +94,19 @@ export default function AnalyticsPageClient() {
     return true
   }), [applications, batch, direction])
 
-  const funnel = FUNNEL_STAGES.map((stage) => ({
-    stage,
-    count: filtered.filter((app) => hasReachedStage(app, stage)).length,
+  const reachedIndexes = filtered.map(getReachedStageIndex)
+  const funnel = FUNNEL_STAGES.map((stage, index) => {
+    const count = index === 0
+      ? filtered.length
+      : reachedIndexes.filter((highest) => highest >= index).length
+    return { stage, count }
+  }).map((item, index, list) => ({
+    ...item,
+    stepRate: index === 0 ? '100%' : formatRate(item.count, list[index - 1].count),
+    totalRate: formatRate(item.count, filtered.length),
   }))
-  const maxFunnel = Math.max(1, ...funnel.map((item) => item.count))
+  const maxFunnel = Math.max(1, filtered.length)
+  const funnelHeight = FUNNEL_STAGES.length * 78 + 16
 
   const directionCounts = directions.map((item, index) => ({
     label: item,
@@ -148,22 +172,63 @@ export default function AnalyticsPageClient() {
       {error && <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-sm text-red-700">{error}</div>}
 
       <section className="rounded-lg border border-slate-100 bg-white p-5">
-        <h2 className="text-base font-semibold text-slate-800">投递转化漏斗</h2>
-        <div className="mt-5 grid gap-3">
-          {funnel.map((item, index) => {
-            const prev = funnel[index - 1]?.count
-            const rate = prev ? `${Math.round((item.count / prev) * 100)}%` : ''
-            return (
-              <div key={item.stage} className="grid grid-cols-[70px_1fr_60px_60px] items-center gap-3 text-sm">
-                <span className="text-right text-slate-500">{item.stage}</span>
-                <div className="h-8 rounded-md bg-slate-100">
-                  <div className="h-8 rounded-md bg-blue-500" style={{ width: `${Math.max(4, (item.count / maxFunnel) * 100)}%` }} />
-                </div>
-                <span className="font-semibold text-slate-800">{item.count}</span>
-                <span className="text-slate-400">{rate}</span>
-              </div>
-            )
-          })}
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div>
+            <h2 className="text-base font-semibold text-slate-800">投递转化漏斗</h2>
+            <p className="mt-1 text-xs text-slate-400">已投递按全部记录计算，后续阶段按达到过的最高阶段累计</p>
+          </div>
+          <div className="text-right text-sm">
+            <p className="font-semibold text-slate-800">{filtered.length}</p>
+            <p className="text-xs text-slate-400">筛选后投递数</p>
+          </div>
+        </div>
+        <div className="mt-6 overflow-x-auto">
+          <svg
+            viewBox={`0 0 1000 ${funnelHeight}`}
+            role="img"
+            aria-label="投递转化漏斗"
+            className="min-w-[760px] w-full"
+          >
+            {funnel.map((item, index) => {
+              const y = 8 + index * 78
+              const centerY = y + 36
+              const topWidth = funnelWidth(item.count, maxFunnel)
+              const bottomWidth = funnelWidth(funnel[index + 1]?.count ?? item.count, maxFunnel)
+              const topLeft = 500 - topWidth / 2
+              const topRight = 500 + topWidth / 2
+              const bottomLeft = 500 - bottomWidth / 2
+              const bottomRight = 500 + bottomWidth / 2
+
+              return (
+                <g key={item.stage}>
+                  <text x="120" y={centerY + 6} textAnchor="end" className="text-sm font-medium text-slate-500" fill="currentColor">
+                    {item.stage}
+                  </text>
+                  <polygon
+                    points={`${topLeft},${y} ${topRight},${y} ${bottomRight},${y + 72} ${bottomLeft},${y + 72}`}
+                    fill={FUNNEL_COLORS[index]}
+                  />
+                  <text x="500" y={centerY + 7} textAnchor="middle" className="text-lg font-semibold" fill="white">
+                    {item.count}
+                  </text>
+                  <text x="850" y={centerY - 2} className="text-base font-semibold text-slate-800" fill="currentColor">
+                    {item.stepRate}
+                  </text>
+                  <text x="850" y={centerY + 20} className="text-xs text-slate-400" fill="currentColor">
+                    {index === 0 ? '基准' : '上一阶段'}
+                  </text>
+                </g>
+              )
+            })}
+          </svg>
+        </div>
+        <div className="mt-5 grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+          {funnel.slice(1).map((item) => (
+            <div key={item.stage} className="rounded-lg bg-slate-50 px-4 py-3">
+              <p className="text-xs text-slate-400">{item.stage} / 总转化</p>
+              <p className="mt-1 text-lg font-semibold text-slate-800">{item.totalRate}</p>
+            </div>
+          ))}
         </div>
       </section>
 
