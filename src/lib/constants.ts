@@ -66,8 +66,9 @@ export const STATUS_COLORS: Record<string, string> = {
 }
 
 export const TEMPERATURE_COLORS: Record<string, string> = {
-  hot: 'bg-red-400',
-  warm: 'bg-yellow-400',
-  cold: 'bg-blue-400',
-  frozen: 'bg-gray-400',
+  urgent: 'bg-red-500',
+  normal: 'bg-blue-500',
+  stale: 'bg-gray-400',
+  success: 'bg-emerald-500',
+  terminal: 'bg-gray-400',
 }

@@ -121,12 +121,33 @@ export interface ParsedJobInfo {
   note?: string
 }
 
-export type TemperatureLevel = 'hot' | 'warm' | 'cold' | 'frozen'
+export interface ApplicationFilters {
+  status?: string
+  direction?: string
+  platform?: string
+  batch?: string
+  query?: string
+}
+
+export type CreateApplicationInput = Omit<
+  Application,
+  'id' | 'user_id' | 'created_at' | 'updated_at'
+>
+
+export type UpdateApplicationInput = Partial<
+  Omit<Application, 'id' | 'user_id' | 'created_at' | 'updated_at'>
+>
+
+export type TemperatureLevel = 'urgent' | 'normal' | 'stale' | 'success' | 'terminal'
 
 export interface TemperatureInfo {
   level: TemperatureLevel
   daysSinceUpdate: number
   label: string
+  dotClass: string
+  borderClass: string
+  badgeClass: string
+  faded: boolean
 }
 
 export interface DashboardStats {
