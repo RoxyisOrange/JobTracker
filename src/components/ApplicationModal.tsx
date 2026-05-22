@@ -4,6 +4,7 @@ import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
 import { APPLICATION_STATUSES, BATCHES, DEFAULT_DIRECTIONS, PLATFORMS } from '@/lib/constants'
 import type { Application, CreateApplicationInput, Resume } from '@/lib/types'
+import { hasInterviewStatusConflict, isInterviewStatus, isPreInterviewStatus } from '@/lib/status'
 import { cn } from '@/lib/utils'
 
 interface ApplicationModalProps {
@@ -106,11 +107,55 @@ export default function ApplicationModal({
     }))
   }
 
+  const updateStatus = (nextStatus: string) => {
+    if (hasInterviewStatusConflict(nextStatus, form.interview_time)) {
+      window.alert('已填写面试时间时，状态不能选择“已投递”或“笔试”')
+      return
+    }
+
+    if (
+      form.interview_time &&
+      isInterviewStatus(form.status) &&
+      isInterviewStatus(nextStatus) &&
+      nextStatus !== form.status
+    ) {
+      window.alert('进入新的面试阶段后，请重新填写该阶段面试时间；已清空上一轮面试时间')
+      setForm({ ...form, status: nextStatus, interview_time: null })
+      return
+    }
+
+    setForm({ ...form, status: nextStatus })
+  }
+
+  const updateInterviewTime = (value: string) => {
+    const nextInterviewTime = fromDatetimeLocal(value)
+
+    if (!nextInterviewTime) {
+      setForm({ ...form, interview_time: null })
+      return
+    }
+
+    if (isPreInterviewStatus(form.status)) {
+      const confirmed = window.confirm('填写面试时间后，状态需要进入面试阶段。是否将状态切换为“一面”？')
+      if (!confirmed) return
+      setForm({ ...form, status: '一面', interview_time: nextInterviewTime })
+      return
+    }
+
+    setForm({ ...form, interview_time: nextInterviewTime })
+  }
+
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault()
 
     if (!form.company.trim() || !form.position.trim()) {
       window.alert('公司名和岗位名称必填')
+      return
+    }
+
+    const interviewTime = fromDatetimeLocal(toDatetimeLocal(form.interview_time))
+    if (hasInterviewStatusConflict(form.status, interviewTime)) {
+      window.alert('已填写面试时间时，状态不能是已投递或笔试')
       return
     }
 
@@ -123,7 +168,7 @@ export default function ApplicationModal({
       batch: form.batch || '日常实习',
       referral_code: form.referral_code.trim(),
       note: form.note.trim(),
-      interview_time: fromDatetimeLocal(toDatetimeLocal(form.interview_time)),
+      interview_time: interviewTime,
     })
     setSaving(false)
   }
@@ -252,11 +297,17 @@ export default function ApplicationModal({
                 <span className="text-sm font-medium text-slate-700">状态</span>
                 <select
                   value={form.status}
-                  onChange={(event) => setForm({ ...form, status: event.target.value })}
+                  onChange={(event) => updateStatus(event.target.value)}
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 >
                   {APPLICATION_STATUSES.map((status) => (
-                    <option key={status} value={status}>{status}</option>
+                    <option
+                      key={status}
+                      value={status}
+                      disabled={Boolean(form.interview_time) && isPreInterviewStatus(status)}
+                    >
+                      {status}
+                    </option>
                   ))}
                 </select>
               </label>
@@ -292,7 +343,7 @@ export default function ApplicationModal({
                 <input
                   type="datetime-local"
                   value={toDatetimeLocal(form.interview_time)}
-                  onChange={(event) => setForm({ ...form, interview_time: fromDatetimeLocal(event.target.value) })}
+                  onChange={(event) => updateInterviewTime(event.target.value)}
                   className="rounded-lg border border-slate-200 px-3 py-2 text-sm outline-none focus:border-blue-400 focus:ring-2 focus:ring-blue-100"
                 />
               </label>

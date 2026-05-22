@@ -10,7 +10,7 @@ import PipelineCompanyView from '@/components/PipelineCompanyView'
 import PipelineKanban from '@/components/PipelineKanban'
 import PipelineTable from '@/components/PipelineTable'
 import ReviewModal from '@/components/ReviewModal'
-import { ACTIVE_STATUSES, APPLICATION_STATUSES, BATCHES, DEFAULT_DIRECTIONS, PLATFORMS } from '@/lib/constants'
+import { ACTIVE_STATUSES, APPLICATION_STATUSES, BATCHES, DEFAULT_DIRECTIONS, PLATFORMS, PRE_INTERVIEW_STATUSES } from '@/lib/constants'
 import { getTemperature } from '@/lib/temperature'
 import type { Application, CreateApplicationInput } from '@/lib/types'
 import { cn } from '@/lib/utils'
@@ -139,6 +139,13 @@ export default function PipelinePageClient() {
     const special = applySpecialFilter(applications, specialFilter, nudgeConfig)
     return filterApplications(special, { query, status, direction, platform, batch })
   }, [applications, batch, direction, nudgeConfig, platform, query, specialFilter, status])
+  const selectedApplications = useMemo(
+    () => applications.filter((app) => selectedIds.includes(app.id)),
+    [applications, selectedIds]
+  )
+  const disabledBatchStatuses = selectedApplications.some((app) => app.interview_time)
+    ? PRE_INTERVIEW_STATUSES
+    : []
 
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
@@ -430,7 +437,11 @@ export default function PipelinePageClient() {
                 ×
               </button>
             </div>
-            <BatchStatusPicker onPick={(nextStatus) => void pickBatchStatus(nextStatus)} />
+            <BatchStatusPicker
+              disabledStatuses={disabledBatchStatuses}
+              disabledReason="已选记录中包含面试时间，不能改为已投递或笔试"
+              onPick={(nextStatus) => void pickBatchStatus(nextStatus)}
+            />
           </div>
         </div>
       )}

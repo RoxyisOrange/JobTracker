@@ -9,6 +9,7 @@ import type {
   StatusHistoryEntry,
   UpdateApplicationInput,
 } from '@/lib/types'
+import { hasInterviewStatusConflict, isInterviewStatus } from '@/lib/status'
 
 const EMPTY_FILTERS: ApplicationFilters = {}
 
@@ -52,6 +53,10 @@ function appendStatusHistory(app: Application, nextStatus: string, note = '状�
     ...(app.status_history ?? []),
     { status: nextStatus, date: new Date().toISOString(), note },
   ]
+}
+
+function validationError(message: string) {
+  return { data: null, error: { message } }
 }
 
 export function useApplications(initialFilters: ApplicationFilters = EMPTY_FILTERS) {
@@ -105,7 +110,11 @@ export function useApplications(initialFilters: ApplicationFilters = EMPTY_FILTE
   const createApplication = async (item: CreateApplicationInput) => {
     const supabase = createClient()
     const { data: { user } } = await supabase.auth.getUser()
-    if (!user) return { data: null, error: { message: '请先登录' } }
+    if (!user) return validationError('请先登录')
+
+    if (hasInterviewStatusConflict(item.status, item.interview_time)) {
+      return validationError('已填写面试时间时，状态不能是已投递或笔试')
+    }
 
     const { data, error } = await supabase
       .from('applications')
@@ -120,9 +129,24 @@ export function useApplications(initialFilters: ApplicationFilters = EMPTY_FILTE
   const updateApplication = async (id: string, patch: UpdateApplicationInput) => {
     const current = applications.find((app) => app.id === id)
     const nextPatch = { ...patch }
+    const nextStatus = patch.status ?? current?.status
+    const hasInterviewTimePatch = Object.prototype.hasOwnProperty.call(patch, 'interview_time')
+    const nextInterviewTime = hasInterviewTimePatch ? patch.interview_time : current?.interview_time
+
+    if (nextStatus && hasInterviewStatusConflict(nextStatus, nextInterviewTime)) {
+      return validationError('已填写面试时间时，状态不能是已投递或笔试')
+    }
 
     if (current && patch.status && patch.status !== current.status) {
       nextPatch.status_history = appendStatusHistory(current, patch.status)
+
+      if (
+        !hasInterviewTimePatch &&
+        isInterviewStatus(current.status) &&
+        isInterviewStatus(patch.status)
+      ) {
+        nextPatch.interview_time = null
+      }
     }
 
     const supabase = createClient()
@@ -152,13 +176,27 @@ export function useApplications(initialFilters: ApplicationFilters = EMPTY_FILTE
 
     for (const id of ids) {
       const current = applications.find((app) => app.id === id)
+      if (current && hasInterviewStatusConflict(newStatus, current.interview_time)) {
+        return {
+          error: {
+            message: `「${current.company} - ${current.position}」已填写面试时间，不能改为已投递或笔试`,
+          },
+        }
+      }
       const status_history = current
         ? appendStatusHistory(current, newStatus, '批量状态更新')
         : [{ status: newStatus, date: now, note: '批量状态更新' }]
+      const shouldClearInterviewTime = Boolean(
+        current &&
+        current.status !== newStatus &&
+        isInterviewStatus(current.status) &&
+        isInterviewStatus(newStatus)
+      )
+      const interviewPatch = shouldClearInterviewTime ? { interview_time: null } : {}
 
       const { error } = await supabase
         .from('applications')
-        .update({ status: newStatus, status_history, updated_at: now })
+        .update({ status: newStatus, status_history, ...interviewPatch, updated_at: now })
         .eq('id', id)
 
       if (error) return { error }

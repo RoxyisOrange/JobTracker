@@ -12,6 +12,8 @@ export const APPLICATION_STATUSES = [
 
 export const ACTIVE_STATUSES = ['笔试', '一面', '二面', '三面', 'HR面']
 export const TERMINAL_STATUSES = ['Offer', '已挂', '已放弃']
+export const PRE_INTERVIEW_STATUSES = ['已投递', '笔试']
+export const INTERVIEW_STATUSES = ['一面', '二面', '三面', 'HR面']
 
 export const PLATFORMS = [
   'Boss直聘',

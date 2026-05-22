@@ -1,7 +1,6 @@
 import type { Application, TemperatureInfo, UserConfig } from './types'
 import { NUDGE_DEFAULTS, TERMINAL_STATUSES } from './constants'
-
-const INTERVIEW_STATUSES = ['一面', '二面', '三面', 'HR面']
+import { isInterviewStatus } from './status'
 
 function daysBetween(from: Date, to = new Date()) {
   return Math.max(0, Math.floor((to.getTime() - from.getTime()) / 86_400_000))
@@ -57,7 +56,7 @@ export function getTemperature(
 
   const dueHours = hoursUntil(app.interview_time)
   if (
-    INTERVIEW_STATUSES.includes(app.status) &&
+    (isInterviewStatus(app.status) || Boolean(app.interview_time)) &&
     dueHours !== null &&
     dueHours >= 0 &&
     dueHours <= 24
@@ -72,14 +71,15 @@ export function getTemperature(
     })
   }
 
-  const baseDate = new Date(lastStatusDate(app))
+  const useInterviewTiming = isInterviewStatus(app.status) || Boolean(app.interview_time)
+  const baseDate = new Date(useInterviewTiming && app.interview_time ? app.interview_time : lastStatusDate(app))
   const days = Number.isNaN(baseDate.getTime()) ? 0 : daysBetween(baseDate)
-  const threshold =
-    app.status === '已投递'
-      ? config?.nudge_applied ?? NUDGE_DEFAULTS.applied
-      : app.status === '笔试'
-        ? config?.nudge_written ?? NUDGE_DEFAULTS.written
-        : config?.nudge_interview ?? NUDGE_DEFAULTS.interview
+  let threshold = config?.nudge_interview ?? NUDGE_DEFAULTS.interview
+  if (!useInterviewTiming && app.status === '已投递') {
+    threshold = config?.nudge_applied ?? NUDGE_DEFAULTS.applied
+  } else if (!useInterviewTiming && app.status === '笔试') {
+    threshold = config?.nudge_written ?? NUDGE_DEFAULTS.written
+  }
 
   if (days > threshold) {
     return baseInfo({
