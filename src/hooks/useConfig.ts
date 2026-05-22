@@ -15,6 +15,34 @@ const DEFAULT_CONFIG: Omit<UserConfig, 'user_id' | 'created_at' | 'updated_at'> 
   nudge_interview: NUDGE_DEFAULTS.interview,
 }
 
+const LEGACY_DEFAULT_DIRECTIONS = [
+  '数据分析/数据科学',
+  '多模态算法',
+  'AI应用算法',
+  '大模型评测',
+]
+
+function isLegacyDefaultDirections(directions: string[] | null | undefined) {
+  if (!directions || directions.length !== LEGACY_DEFAULT_DIRECTIONS.length) return false
+  return LEGACY_DEFAULT_DIRECTIONS.every((direction) => directions.includes(direction))
+}
+
+async function hasAnyUserData(supabase: ReturnType<typeof createClient>, userId: string) {
+  const tables = ['applications', 'inbox', 'resumes'] as const
+  const results = await Promise.all(
+    tables.map((table) =>
+      supabase
+        .from(table)
+        .select('id')
+        .eq('user_id', userId)
+        .limit(1)
+        .maybeSingle()
+    )
+  )
+
+  return results.some(({ data }) => Boolean(data))
+}
+
 export function useConfig() {
   const [config, setConfig] = useState<UserConfig | null>(null)
   const [loading, setLoading] = useState(true)
@@ -38,7 +66,18 @@ export function useConfig() {
         .single()
       setConfig(created)
     } else {
-      setConfig(data)
+      if (isLegacyDefaultDirections(data.directions) && !(await hasAnyUserData(supabase, user.id))) {
+        const { data: cleaned } = await supabase
+          .from('user_config')
+          .update({ directions: [], updated_at: new Date().toISOString() })
+          .eq('user_id', user.id)
+          .select()
+          .single()
+
+        setConfig(cleaned ?? { ...data, directions: [] })
+      } else {
+        setConfig(data)
+      }
     }
     setLoading(false)
   }, [])
