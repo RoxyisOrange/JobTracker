@@ -2,7 +2,7 @@
 
 import type { FormEvent } from 'react'
 import { useMemo, useState } from 'react'
-import { APPLICATION_STATUSES, BATCHES, DEFAULT_DIRECTIONS, PLATFORMS } from '@/lib/constants'
+import { APPLICATION_STATUSES, BATCHES, PLATFORMS } from '@/lib/constants'
 import type { Application, CreateApplicationInput, Resume } from '@/lib/types'
 import { hasInterviewStatusConflict, isInterviewStatus, isPreInterviewStatus } from '@/lib/status'
 import { cn } from '@/lib/utils'
@@ -79,7 +79,7 @@ function formFromApplication(app: Application): ApplicationForm {
 
 export default function ApplicationModal({
   application,
-  directions = DEFAULT_DIRECTIONS,
+  directions = [],
   resumes = [],
   onClose,
   onSave,

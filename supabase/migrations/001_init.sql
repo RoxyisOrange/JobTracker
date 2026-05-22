@@ -59,7 +59,7 @@ create table user_config (
   api_key_encrypted text,
   text_model text default 'qwen-turbo-latest',
   vision_model text default 'qwen3-vl-flash',
-  directions text[] default '{"数据分析/数据科学","多模态算法","AI应用算法","大模型评测"}',
+  directions text[] default '{}',
   nudge_applied int default 7,
   nudge_written int default 12,
   nudge_interview int default 7,

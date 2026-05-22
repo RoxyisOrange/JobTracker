@@ -35,13 +35,6 @@ export const SOURCES = [
   '其他',
 ] as const
 
-export const DEFAULT_DIRECTIONS = [
-  '数据分析/数据科学',
-  '多模态算法',
-  'AI应用算法',
-  '大模型评测',
-] as const
-
 export const BATCHES = ['日常实习', '暑期实习', '春招', '秋招'] as const
 
 export const CURRENT_BATCH = '秋招'

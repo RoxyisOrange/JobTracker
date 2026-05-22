@@ -3,7 +3,7 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
 import SmartParseBox from '@/components/SmartParseBox'
-import { BATCHES, DEFAULT_DIRECTIONS, SOURCES } from '@/lib/constants'
+import { BATCHES, SOURCES } from '@/lib/constants'
 import type { CreateInboxItemInput, InboxItem, ParsedJobInfo } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -67,7 +67,7 @@ function mergeParsed(form: InboxFormData, data: ParsedJobInfo & { raw_note?: str
 export default function InboxModal({
   mode,
   item,
-  directions = DEFAULT_DIRECTIONS,
+  directions = [],
   onClose,
   onSave,
 }: InboxModalProps) {

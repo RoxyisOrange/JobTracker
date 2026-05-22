@@ -3,13 +3,13 @@
 import { useEffect, useState, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import type { UserConfig } from '@/lib/types'
-import { DEFAULT_DIRECTIONS, DEFAULT_TEXT_MODEL, DEFAULT_VISION_MODEL, NUDGE_DEFAULTS } from '@/lib/constants'
+import { DEFAULT_TEXT_MODEL, DEFAULT_VISION_MODEL, NUDGE_DEFAULTS } from '@/lib/constants'
 
 const DEFAULT_CONFIG: Omit<UserConfig, 'user_id' | 'created_at' | 'updated_at'> = {
   api_key_encrypted: null,
   text_model: DEFAULT_TEXT_MODEL,
   vision_model: DEFAULT_VISION_MODEL,
-  directions: [...DEFAULT_DIRECTIONS],
+  directions: [],
   nudge_applied: NUDGE_DEFAULTS.applied,
   nudge_written: NUDGE_DEFAULTS.written,
   nudge_interview: NUDGE_DEFAULTS.interview,

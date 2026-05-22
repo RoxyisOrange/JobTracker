@@ -1,7 +1,7 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { BATCHES, DEFAULT_DIRECTIONS, PLATFORMS } from '@/lib/constants'
+import { BATCHES, PLATFORMS } from '@/lib/constants'
 import type { CreateApplicationInput, Resume } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -44,7 +44,7 @@ function parseTextRows(text: string) {
 }
 
 export default function BatchEntryModal({
-  directions = DEFAULT_DIRECTIONS,
+  directions = [],
   resumes = [],
   onClose,
   onSubmit,

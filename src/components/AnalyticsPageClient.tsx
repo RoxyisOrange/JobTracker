@@ -1,7 +1,8 @@
 'use client'
 
 import { useMemo, useState } from 'react'
-import { BATCHES, DEFAULT_DIRECTIONS, PLATFORMS } from '@/lib/constants'
+import { BATCHES, PLATFORMS } from '@/lib/constants'
+import { directionsFromRecords, uniqueDirections } from '@/lib/directions'
 import type { Application } from '@/lib/types'
 import { useApplications } from '@/hooks/useApplications'
 import { useConfig } from '@/hooks/useConfig'
@@ -86,7 +87,7 @@ export default function AnalyticsPageClient() {
   const [direction, setDirection] = useState('')
   const [batch, setBatch] = useState('')
   const [month, setMonth] = useState(() => new Date())
-  const directions = config?.directions?.length ? config.directions : DEFAULT_DIRECTIONS
+  const directions = uniqueDirections(config?.directions, directionsFromRecords(applications))
 
   const filtered = useMemo(() => applications.filter((app) => {
     if (direction && !app.direction.includes(direction)) return false

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import ResumeList from '@/components/ResumeList'
 import ResumeModal from '@/components/ResumeModal'
-import { DEFAULT_DIRECTIONS } from '@/lib/constants'
+import { directionsFromRecords, uniqueDirections } from '@/lib/directions'
 import type { Resume } from '@/lib/types'
 import { useConfig } from '@/hooks/useConfig'
 import { useResumes, type ResumeInput } from '@/hooks/useResumes'
@@ -12,7 +12,7 @@ export default function ResumePageClient() {
   const { resumes, loading, error, createResume, updateResume, deleteResume, previewResume } = useResumes()
   const { config } = useConfig()
   const [modalResume, setModalResume] = useState<Resume | null | undefined>()
-  const directions = config?.directions?.length ? config.directions : DEFAULT_DIRECTIONS
+  const directions = uniqueDirections(config?.directions, directionsFromRecords(resumes))
 
   const saveResume = async (input: ResumeInput) => {
     const result = modalResume

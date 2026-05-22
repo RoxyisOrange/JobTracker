@@ -2,7 +2,6 @@
 
 import type { FormEvent } from 'react'
 import { useRef, useState } from 'react'
-import { DEFAULT_DIRECTIONS } from '@/lib/constants'
 import type { Resume } from '@/lib/types'
 import { cn, fileSizeLabel } from '@/lib/utils'
 import type { ResumeInput } from '@/hooks/useResumes'
@@ -16,7 +15,7 @@ interface ResumeModalProps {
 
 export default function ResumeModal({
   resume,
-  directions = DEFAULT_DIRECTIONS,
+  directions = [],
   onClose,
   onSave,
 }: ResumeModalProps) {

@@ -10,8 +10,9 @@ import PipelineCompanyView from '@/components/PipelineCompanyView'
 import PipelineKanban from '@/components/PipelineKanban'
 import PipelineTable from '@/components/PipelineTable'
 import ReviewModal from '@/components/ReviewModal'
-import { ACTIVE_STATUSES, APPLICATION_STATUSES, BATCHES, DEFAULT_DIRECTIONS, PLATFORMS, PRE_INTERVIEW_STATUSES } from '@/lib/constants'
+import { ACTIVE_STATUSES, APPLICATION_STATUSES, BATCHES, PLATFORMS, PRE_INTERVIEW_STATUSES } from '@/lib/constants'
 import { getTemperature } from '@/lib/temperature'
+import { directionsFromRecords, uniqueDirections } from '@/lib/directions'
 import type { Application, CreateApplicationInput } from '@/lib/types'
 import { cn } from '@/lib/utils'
 import { useApplications } from '@/hooks/useApplications'
@@ -124,7 +125,7 @@ export default function PipelinePageClient() {
   const [showStatusPicker, setShowStatusPicker] = useState(false)
   const [showBatchEntry, setShowBatchEntry] = useState(false)
 
-  const directions = config?.directions?.length ? config.directions : DEFAULT_DIRECTIONS
+  const directions = uniqueDirections(config?.directions, directionsFromRecords(applications))
   const nudgeConfig = useMemo(() => (
     config
       ? {

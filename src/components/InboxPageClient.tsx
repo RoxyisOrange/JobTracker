@@ -3,9 +3,10 @@
 import { useEffect, useMemo, useState } from 'react'
 import InboxList from '@/components/InboxList'
 import InboxModal from '@/components/InboxModal'
-import { BATCHES, DEFAULT_DIRECTIONS } from '@/lib/constants'
+import { BATCHES } from '@/lib/constants'
 import { useConfig } from '@/hooks/useConfig'
 import { useInbox } from '@/hooks/useInbox'
+import { directionsFromRecords, uniqueDirections } from '@/lib/directions'
 import type { CreateInboxItemInput, InboxItem, InboxStatus } from '@/lib/types'
 import { cn } from '@/lib/utils'
 
@@ -70,7 +71,7 @@ export default function InboxPageClient() {
   const [batchMode, setBatchMode] = useState(false)
   const [selectedIds, setSelectedIds] = useState<string[]>([])
 
-  const directions = config?.directions?.length ? config.directions : DEFAULT_DIRECTIONS
+  const directions = uniqueDirections(config?.directions, directionsFromRecords(items))
 
   const visibleItems = useMemo(() => filterItems(items, {
     query,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { DEFAULT_DIRECTIONS, SOURCES } from '@/lib/constants'
+import { SOURCES } from '@/lib/constants'
 import type { ParsedJobInfo } from '@/lib/types'
 import { cn, fileSizeLabel } from '@/lib/utils'
 
@@ -46,10 +46,7 @@ function fallbackParse(text: string, directions: readonly string[]): ParsedJobIn
     text.match(/招聘[：:\s]?([^\n，。；;]{2,40})/)?.[1]?.trim() ??
     ''
   const link = text.match(LINK_RE)?.[0] ?? ''
-  const matchedDirections = directions.filter((direction) => text.includes(direction))
-  const inferredDirection = matchedDirections.length > 0
-    ? matchedDirections
-    : DEFAULT_DIRECTIONS.filter((direction) => text.includes(direction))
+  const inferredDirection = directions.filter((direction) => text.includes(direction))
   const source = SOURCES.find((item) => text.includes(item)) ?? ''
 
   return {
@@ -106,7 +103,7 @@ async function compressImage(file: File): Promise<ImagePayload> {
   }
 }
 
-export default function SmartParseBox({ directions = DEFAULT_DIRECTIONS, onParsed }: SmartParseBoxProps) {
+export default function SmartParseBox({ directions = [], onParsed }: SmartParseBoxProps) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [text, setText] = useState('')
   const [image, setImage] = useState<ImagePayload | null>(null)

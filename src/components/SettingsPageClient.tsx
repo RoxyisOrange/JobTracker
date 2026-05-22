@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from 'react'
 import SettingsLock from '@/components/SettingsLock'
 import StorageManager from '@/components/StorageManager'
 import { applyTheme, THEME_KEY } from '@/components/ThemeHydrator'
-import { DEFAULT_DIRECTIONS, DEFAULT_TEXT_MODEL, DEFAULT_VISION_MODEL, NUDGE_DEFAULTS } from '@/lib/constants'
+import { DEFAULT_TEXT_MODEL, DEFAULT_VISION_MODEL, NUDGE_DEFAULTS } from '@/lib/constants'
 import type { Application, InboxItem, Resume, UserConfig } from '@/lib/types'
 import { createClient } from '@/lib/supabase/client'
 import { useApplications } from '@/hooks/useApplications'
@@ -88,7 +88,7 @@ export default function SettingsPageClient() {
     return () => window.clearTimeout(timer)
   }, [config])
 
-  const directions = config?.directions?.length ? config.directions : [...DEFAULT_DIRECTIONS]
+  const directions = config?.directions ?? []
 
   const saveAi = async () => {
     const error = await updateConfig({
