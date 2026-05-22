@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import SettingsLock from '@/components/SettingsLock'
 import StorageManager from '@/components/StorageManager'
 import { applyTheme, THEME_KEY } from '@/components/ThemeHydrator'
@@ -49,6 +50,7 @@ function csvEscape(value: unknown) {
 }
 
 export default function SettingsPageClient() {
+  const router = useRouter()
   const importRef = useRef<HTMLInputElement>(null)
   const { config, loading: configLoading, update: updateConfig, refetch: refetchConfig } = useConfig()
   const { items: inboxItems, refetch: refetchInbox } = useInbox()
@@ -64,6 +66,9 @@ export default function SettingsPageClient() {
   const [directionInput, setDirectionInput] = useState('')
   const [importMode, setImportMode] = useState<'merge' | 'overwrite'>('merge')
   const [theme, setTheme] = useState<'light' | 'dark'>('light')
+  const [showDeleteAccount, setShowDeleteAccount] = useState(false)
+  const [deleteConfirmText, setDeleteConfirmText] = useState('')
+  const [deletingAccount, setDeletingAccount] = useState(false)
 
   useEffect(() => {
     const timer = window.setTimeout(() => {
@@ -261,6 +266,28 @@ export default function SettingsPageClient() {
     await Promise.all([refetchInbox(), refetchApplications(), refetchResumes()])
   }
 
+  const deleteAccount = async () => {
+    if (deleteConfirmText !== '注销账号') return
+    if (!window.confirm('最后确认：注销会永久删除当前账号下的所有投递、收集池、简历、设置和文件。确认继续？')) return
+
+    setDeletingAccount(true)
+    try {
+      const response = await fetch('/api/account/delete', { method: 'POST' })
+      const payload = await response.json().catch(() => ({})) as { error?: string }
+
+      if (!response.ok) {
+        window.alert(payload.error ?? '注销账号失败')
+        return
+      }
+
+      const supabase = createClient()
+      await supabase.auth.signOut()
+      router.replace('/login')
+    } finally {
+      setDeletingAccount(false)
+    }
+  }
+
   if (configLoading) {
     return <div className="rounded-lg border border-slate-100 bg-white p-8 text-sm text-slate-500">设置加载中...</div>
   }
@@ -368,6 +395,79 @@ export default function SettingsPageClient() {
           void clearResumePdf(resume)
         }}
       />
+
+      <section className="rounded-lg border border-red-100 bg-white p-5">
+        <h2 className="text-base font-semibold text-red-700">危险操作</h2>
+        <p className="mt-2 text-sm text-slate-500">
+          注销账号会清除当前账号下的投递记录、收集池、简历、设置和已上传文件，并自动退出登录。
+        </p>
+        <button
+          type="button"
+          onClick={() => {
+            setDeleteConfirmText('')
+            setShowDeleteAccount(true)
+          }}
+          className="mt-4 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50"
+        >
+          注销账号
+        </button>
+      </section>
+
+      {showDeleteAccount && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/40 px-4 py-6">
+          <div className="w-full max-w-lg rounded-xl bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b border-red-100 px-6 py-4">
+              <h2 className="text-lg font-semibold text-red-700">注销账号</h2>
+              <button
+                type="button"
+                onClick={() => setShowDeleteAccount(false)}
+                className="flex h-8 w-8 items-center justify-center rounded-md text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+                aria-label="关闭"
+                title="关闭"
+              >
+                ×
+              </button>
+            </div>
+
+            <div className="grid gap-4 px-6 py-5 text-sm">
+              <div className="rounded-lg border border-red-100 bg-red-50 px-4 py-3 text-red-700">
+                这是不可恢复操作。注销后会删除当前账号下的所有应用数据和简历文件，并退出登录。
+              </div>
+              <p className="text-slate-600">
+                之后你仍然可以用同一个 Google 账号再次登录，系统会按全新账号重新初始化。
+              </p>
+              <label className="grid gap-1.5">
+                <span className="font-medium text-slate-700">
+                  请输入“注销账号”以确认
+                </span>
+                <input
+                  value={deleteConfirmText}
+                  onChange={(event) => setDeleteConfirmText(event.target.value)}
+                  className="rounded-lg border border-slate-200 px-3 py-2 outline-none focus:border-red-300 focus:ring-2 focus:ring-red-100"
+                />
+              </label>
+            </div>
+
+            <div className="flex justify-end gap-3 border-t border-slate-100 px-6 py-4">
+              <button
+                type="button"
+                onClick={() => setShowDeleteAccount(false)}
+                className="rounded-lg border border-slate-200 px-4 py-2 text-sm font-medium text-slate-600 hover:bg-slate-50"
+              >
+                取消
+              </button>
+              <button
+                type="button"
+                disabled={deleteConfirmText !== '注销账号' || deletingAccount}
+                onClick={() => void deleteAccount()}
+                className="rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {deletingAccount ? '注销中...' : '永久注销'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
